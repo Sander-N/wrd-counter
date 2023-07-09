@@ -1,0 +1,79 @@
+version: '3.7'
+
+services:
+
+  ui:
+    container_name: ui
+    build:
+      context: https://github.com/Sander-N/wrd-counter-ui.git#main:wrd-counter
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    restart: always
+    networks:
+      - frontend
+
+  db:
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass
+      - MYSQL_DATABASE=wrd-counter
+    ports:
+      - "3306:3306"
+    networks:
+      - db
+    restart: always
+
+
+  core:
+    container_name: core
+    build:
+      context: https://github.com/Sander-N/wrd-counter-core.git#main:wrd-counter
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/wrd-counter?createDatabaseIfNotExist=true
+    restart: always
+    networks:
+      - frontend
+      - messaging
+      - db
+    depends_on:
+      - db
+      - rabbitmq
+
+  worker:
+    container_name: worker
+    build:
+      context: https://github.com/Sander-N/wrd-counter-worker.git#main:wrd-counter-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/wrd-counter?allowPublicKeyRetrieval=true&autoReconnect=true&useSSL=false
+    restart: always
+    networks:
+      - db
+      - messaging
+    depends_on:
+      - db
+      - rabbitmq
+      - core
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - messaging
+    restart: always
+
+networks:
+  frontend:
+  messaging:
+  db:
