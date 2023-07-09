@@ -17,9 +17,9 @@ Link to repo: <code>https://github.com/Sander-N/wrd-counter-worker.git</code>
 Username: guest  
 Password: guest 
 
-**MySQL** 
+**MySQL**<br> 
 Username: root  
-Password: pass 
+Password: pass<br> 
 Port: 3306:3306
   
  
